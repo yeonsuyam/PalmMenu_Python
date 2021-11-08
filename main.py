@@ -23,13 +23,13 @@ def getImage(q):
                 results = hands.process(image)
                 q.put(image)
 
-def handTrackingProcess(q):
+def handTrackingFunction(q):
     handTracking = HandTracking(imageQueue = q)
     handTracking.getImage()
 
 if __name__ == '__main__':
     imageQueue = Queue() 
-    handTrackingProcess = Process(target=handTrackingProcess, args=(imageQueue, ))
+    handTrackingProcess = Process(target=handTrackingFunction, args=(imageQueue, ))
     handTrackingProcess.start()
 
     getImage(imageQueue)
