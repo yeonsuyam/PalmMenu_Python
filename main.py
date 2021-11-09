@@ -27,10 +27,17 @@ def handTrackingFunction(q):
     handTracking = HandTracking(imageQueue = q)
     handTracking.getImage()
 
+def touchSensingFunction(q):
+    touchSensing = TouchSensing(q, port="COM4", baudrate=115200)
+    touchSensing.getSensorData()
+
+
 if __name__ == '__main__':
     imageQueue = Queue() 
     handTrackingProcess = Process(target=handTrackingFunction, args=(imageQueue, ))
     handTrackingProcess.start()
 
-    getImage(imageQueue)
-    p.join()
+    getImageProcess = Process(target=getImage, args=(imageQueue,))
+    getImageProcess.start()
+    handTrackingProcess.join()
+    getImageProcess.join()
