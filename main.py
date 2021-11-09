@@ -1,6 +1,7 @@
 import mediapipe as mp
 import cv2
 from handTracking import HandTracking
+from touchSensing import TouchSensing
 from multiprocessing import Process, Queue
 
 def getImage(q):
@@ -28,7 +29,7 @@ def handTrackingFunction(q):
     handTracking.getImage()
 
 def touchSensingFunction(q):
-    touchSensing = TouchSensing(q, port="COM4", baudrate=115200)
+    touchSensing = TouchSensing(q, port="/dev/cu.usbserial-AL03KLV2", baudrate=115200)
     touchSensing.getSensorData()
 
 
@@ -39,5 +40,17 @@ if __name__ == '__main__':
 
     getImageProcess = Process(target=getImage, args=(imageQueue,))
     getImageProcess.start()
+
+    touchSensingQueue = Queue()
+    touchSensingProcess = Process(target=touchSensingFunction, args=(touchSensingQueue, ))
+    touchSensingProcess.start()
+
+    try:
+        while True:
+            result = touchSensingQueue.get()
+    except:
+        pass
+
     handTrackingProcess.join()
     getImageProcess.join()
+    touchSensingProcess.join()
