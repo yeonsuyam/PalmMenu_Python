@@ -3,6 +3,11 @@ import cv2
 from handTracking import HandTracking
 from touchSensing import TouchSensing
 from multiprocessing import Process, Queue
+#from userStudy1 import UserStudy1
+from view import Window
+from PyQt5.QtWidgets import QApplication
+import sys
+
 
 def getImage(q):
     mp_hands = mp.solutions.hands
@@ -45,11 +50,9 @@ if __name__ == '__main__':
     touchSensingProcess = Process(target=touchSensingFunction, args=(touchSensingQueue, ))
     touchSensingProcess.start()
 
-    try:
-        while True:
-            result = touchSensingQueue.get()
-    except:
-        pass
+    App = QApplication(sys.argv)
+    window = Window(touchSensingQueue)
+    sys.exit(App.exec_())
 
     handTrackingProcess.join()
     getImageProcess.join()

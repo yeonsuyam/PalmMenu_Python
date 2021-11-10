@@ -29,14 +29,6 @@ class HandTracking():
 
         pass
 
-    
-    def getHand(self, handInfo):
-        print(handInfo)
-        if handInfo == self.dominantHandInfo:
-            return self.dominantHand
-        elif handInfo == self.nonDominantHandInfo:
-            return self.nonDominantHand
-        pass
 
     def getImage(self):
         while True:
@@ -75,3 +67,13 @@ class HandTracking():
             hand = self.getHand(handInfoDict["label"])
             hand.updateHandJoints(handLandmarks)
         return
+
+
+    def getHand(self, handInfo):
+        print(handInfo)
+        if handInfo == self.dominantHandInfo:
+            return self.dominantHand
+        elif handInfo == self.nonDominantHandInfo:
+            return self.nonDominantHand
+        pass
+
