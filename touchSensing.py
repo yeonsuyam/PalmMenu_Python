@@ -43,11 +43,11 @@ class TouchSensing():
 
 
     def updateTouchState(self, fingerNum, touchSensorData):
-        
         result = self.fingers[fingerNum].updateTouchState(touchSensorData) # 1 if TouchDown, 0 if TouchUp
 
         if result != None:
-            self.touchSensingQueue.put((fingerNum, result))
+            #self.touchSensingQueue.put((fingerNum, result))
+            self.touchSensingQueue.put(str(result))
 
         return
 
