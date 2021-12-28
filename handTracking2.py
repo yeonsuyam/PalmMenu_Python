@@ -50,7 +50,6 @@ class HandTracking():
 
             try:
                 lowerCameraHandTrackingResult = self.lowerCameraQueue.get(0)
-                # print(lowerCameraHandTrackingResult)
                 hand = lowerCameraHandTrackingResult["Right"] if lowerCameraHandTrackingResult["Right"] is not None else lowerCameraHandTrackingResult["Left"]
                 # self.lowerCamera.hands["Right"].updateHandByNPArray(lowerCameraHandTrackingResult["Right"])
                 # self.lowerCamera.hands["Left"].updateHandByNPArray(lowerCameraHandTrackingResult["Left"])
@@ -60,19 +59,15 @@ class HandTracking():
             try:
                 upperCameraHandTrackingResult = self.upperCameraQueue.get(0)
                 # if upperCameraHandTrackingResult["Right"] is None and lowerCameraHandTrackingResult["Right"] is not None:
-                #     print("STRANGE 1")
                 #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
                 #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
 
                 # elif upperCameraHandTrackingResult["Left"] is None and lowerCameraHandTrackingResult["Left"] is not None:
-                #     # print("this")
                 #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
                 #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
                 # elif upperCameraHandTrackingResult["Right"] is not None and upperCameraHandTrackingResult["Left"] is not None:
-                #     print("STRANGE 2")
 
                 # else:
-                #     # print("ok")
                 #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
                 #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
 
@@ -81,21 +76,12 @@ class HandTracking():
                     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
                     self.upperCamera.hands["Right"].updateHandByNPArray(None)
                 else:
-                    # print("ok")
-                    print(upperCameraHandTrackingResult["Right"])
                     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
                     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
-
-
-
-
-                # print("Right: ", self.upperCamera.getRightHandJoints())
-                # print("Right: ", self.upperCamera.getRightHandJoints() is None, "\n Left: ", self.upperCamera.getLeftHandJoints() is None)
             except:
                 pass
 
             if upperCameraHandTrackingResult == None and lowerCameraHandTrackingResult == None:
-                # print("handTracking2.py None")
                 continue
 
             # startTime = time.time()
@@ -112,8 +98,6 @@ class HandTracking():
                 leftHand = self.upperCamera.getLeftHandJoints()
 
 
-            # print("handTracking2.py ", leftHand)
-            # print({"Right": rightHand, "Left": leftHand})
             self.resultQueue.put({"Right": rightHand, "Left": leftHand})
             
             # if (upperImage != None and lowerImage)
@@ -127,7 +111,6 @@ class HandTracking():
 
 
 
-            # print(time.time() - startTime)
             # startTime = time.time()
                 
         return
@@ -187,9 +170,7 @@ class HandTracking():
     def palmPad(self, fingerLandmark):
         dominantFingerXYZ = self.dominantHand.getFingerXYZ(fingerLandmark)
 
-        # print(dominantFingerXYZ)
         dx, dy = self.nonDominantHand.calculateDXYFromPalm(dominantFingerXYZ) 
-        #print(dx * 10, dy * 10) 
         self.resultQueue.put("0," + str(dx) + "," + str(dy))
 
         return

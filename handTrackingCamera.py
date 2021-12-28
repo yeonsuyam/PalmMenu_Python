@@ -35,7 +35,6 @@ class HandTrackingCamera():
 
     def updateHands(self):
         # startTime = time.time()
-        print("updateHands")
         image = None
 
         handTrackingHandler = mp.solutions.hands.Hands(
@@ -60,8 +59,6 @@ class HandTrackingCamera():
 
                     results = handTrackingHandler.process(image)
                     
-                    # print(results)
-
                     image.flags.writeable = True
                     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
@@ -78,20 +75,14 @@ class HandTrackingCamera():
                             self.mp_drawing_styles.get_default_hand_landmarks_style(),
                             self.mp_drawing_styles.get_default_hand_connections_style())
 
-                    # print(self.cameraId, handName)
-
                     cv2.imshow(str(self.cameraId), image)
                     if cv2.waitKey(5) & 0xFF == 27:
                         break
 
-                    print(self.getRightHandJoints())
                     self.resultQueue.put({"Right" : self.getRightHandJoints(), "Left": self.getLeftHandJoints()})
 
             except:
                 pass
-
-            # print(time.time() - startTime)
-            # startTime = time.time()
         
 
         return image
@@ -104,13 +95,13 @@ class HandTrackingCamera():
 
 
         if self.isTwoLineOverlapped(leftHandpinkyEdge, rightHandIndexEdge):
-            print(rightHandIndexEdge)
+            # print(rightHandIndexEdge)
             return True
         if self.isTwoLineOverlapped(leftHandpinkyEdge, rightHandUpperEdge):
-            print(rightHandUpperEdge)
+            # print(rightHandUpperEdge)
             return True
         if self.isTwoLineOverlapped(leftHandpinkyEdge, rightHandpinkyEdge):
-            print(rightHandpinkyEdge)
+            # print(rightHandpinkyEdge)
             return True 
         return False
 

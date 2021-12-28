@@ -41,12 +41,9 @@ class Hand():
             self.joints[landmark][1] = handLandmarks.landmark[landmark].y * h
             self.joints[landmark][2] = handLandmarks.landmark[landmark].z
         
-        #print(self.joints)
 
     def getFingerXYZ(self, landmarkNum):
-        print(self.getJoints())
         if not self.getJoints().any():
-            print("ZEROS")
             return None
         else:
             return self.joints[landmarkNum]
@@ -57,7 +54,7 @@ class Hand():
             return None
         return self.joints[self.landmarksInfo[name][-1]]
     
-    
+
     def calculateNearestFingerNode(self, targetXYZ):
         #return self.calculateNearestFingerNodeByAngle(targetXYZ)
         return self.calculateNearestFingerNodeByNearestNearestAlgorithm(targetXYZ)
@@ -176,9 +173,6 @@ class Hand():
         vertexsOfNearestNode = [nearestJointLandmark, nearestJointLandmarkOfNearestJoint]
         vertexsOfNearestNode.sort()
 
-        #print("fingerOfNearestJoint: ", fingerOfNearestJoint) # ring
-        #print("vertexsOfNearestNode: ", vertexsOfNearestNode) # [15, 16]
-        #print("landmarksInfo: ", self.landmarksInfo[fingerOfNearestJoint]) # [13, 14, 15, 16]
         nearestNode = self.landmarksInfo[fingerOfNearestJoint][0]//4, self.landmarksInfo[fingerOfNearestJoint].index(vertexsOfNearestNode[0]) # 3, 3 (middleFinger, third)
 
         return nearestNode

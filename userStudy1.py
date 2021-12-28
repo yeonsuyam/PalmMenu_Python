@@ -98,7 +98,6 @@ class PalmPad():
         if success:
             self.functions[state]()
 
-        # print((time.time() - startTime)*1000)
         startTime = time.time()
 
         return
@@ -133,10 +132,7 @@ class PalmPad():
 
     def palmPad(self):
         dominantFingerXYZ = self.dominantHand().getFingerXYZByName(self.dominantHandFinger)
-        # print("userStudy1, palmPad()", dominantFingerXYZ)
         dx, dy = self.nonDominantHand().calculateDXYFromPalm(dominantFingerXYZ) 
-        #print(dx * 10, dy * 10) 
-        # print("0," + str(dx) + "," + str(dy))
         if self.touchsensingResult:
             self.resultQueue.put("0," + str(dx) + "," + str(dy))
 
@@ -146,7 +142,6 @@ class PalmPad():
     def palmMenu(self):
         dominantFingerXYZ = self.dominantHand().getFingerXYZByName(fingerLandmark)
         result = self.nonDominantHand().calculateNearestFingerNode(dominantFingerXYZ) # 3, 3
-        # print("1," + str(result[0]) + "," + str(result[1]))
         if self.touchsensingResult:
             self.resultQueue.put("1," + str(result[0]) + "," + str(result[1])) # "3, 3"
         
