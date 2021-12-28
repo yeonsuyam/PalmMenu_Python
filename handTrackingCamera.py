@@ -5,11 +5,22 @@ from hand import Hand
 import cv2
 import numpy as np
 
-class HandTrackingCamera():
-    def __init__(self, cameraId, handTrackingHandler):
-        self.camera = cv2.VideoCapture(cameraId)
-        self.handTrackingHandler = handTrackingHandler
+import time 
 
+class HandTrackingCamera():
+    def __init__(self, resultQueue, cameraId, handNum):
+        self.resultQueue = resultQueue
+
+        self.running = True
+        self.cameraId = cameraId
+        # self.camera = cv2.VideoCapture(cameraId)
+        # mp_hands = mp.solutions.hands
+        # self.handTrackingHandler = mp_hands.Hands(
+        #     max_num_hands=handNum,
+        #     model_complexity=0,
+        #     min_detection_confidence=0.5,
+        #     min_tracking_confidence=0.5)
+        self.handNum = handNum
         rightHand = Hand("Right")
         leftHand = Hand("Left")
         self.hands = {"Left": leftHand, "Right": rightHand}
@@ -17,45 +28,72 @@ class HandTrackingCamera():
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
 
+        self.isHandsUpdated = {"Right": True, "Left": True}
+
         pass
 
 
     def updateHands(self):
+        # startTime = time.time()
+        print("updateHands")
         image = None
 
-        try:
-            success, image = self.camera.read()
-            if not success:
-                print("No Camera")
-            else:
-                image.flags.writeable = False
-                image = cv2.flip(image, 1)
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                image_height, image_width, _ = image.shape
+        handTrackingHandler = mp.solutions.hands.Hands(
+            max_num_hands=self.handNum,
+            model_complexity=0,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5)
 
-                results = self.handTrackingHandler.process(image)
-                
-                image.flags.writeable = True
-                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        camera = cv2.VideoCapture(self.cameraId)
 
-                for handInfo, handLandmarks in zip(results.multi_handedness, results.multi_hand_landmarks):
-                    handName = MessageToDict(handInfo)["classification"][0]["label"]
-                    self.hands[handName].updateHandJoints(handLandmarks, image_height, image_width)
+        while self.running:
+            try:
+                success, image = camera.read()
+                if not success:
+                    print("No Camera")
+                else:
+                    self.isHandsUpdated = {"Right": False, "Left": False}
+                    image.flags.writeable = False
+                    image = cv2.flip(image, 1)
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    image_height, image_width, _ = image.shape
 
+                    results = handTrackingHandler.process(image)
+                    
+                    # print(results)
 
-                    self.mp_drawing.draw_landmarks(
-                        image,
-                        handLandmarks,
-                        self.mp_hands.HAND_CONNECTIONS,
-                        self.mp_drawing_styles.get_default_hand_landmarks_style(),
-                        self.mp_drawing_styles.get_default_hand_connections_style())
+                    image.flags.writeable = True
+                    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
+                    for handInfo, handLandmarks in zip(results.multi_handedness, results.multi_hand_landmarks):
+                        handName = MessageToDict(handInfo)["classification"][0]["label"]
+                        # self.hands[handName].updateHandJoints(handLandmarks, image_height, image_width)
+                        self.hands[handName].updateHandJoints(handLandmarks, image_height, image_width)
+                        self.isHandsUpdated[handName] = True
+                        
+                        self.mp_drawing.draw_landmarks(
+                            image,
+                            handLandmarks,
+                            self.mp_hands.HAND_CONNECTIONS,
+                            self.mp_drawing_styles.get_default_hand_landmarks_style(),
+                            self.mp_drawing_styles.get_default_hand_connections_style())
 
-        except:
-            pass
-        # else:
-        #     pass
-        #     # cv2.imshow('Hands', image)
+                    # print(self.cameraId, handName)
+
+                    cv2.imshow(str(self.cameraId), image)
+                    if cv2.waitKey(5) & 0xFF == 27:
+                        break
+
+                    print(self.getRightHandJoints())
+                    self.resultQueue.put({"Right" : self.getRightHandJoints(), "Left": self.getLeftHandJoints()})
+
+            except:
+                pass
+
+            # print(time.time() - startTime)
+            # startTime = time.time()
+        
+
         return image
 
     def isHandsOverlapped(self):
@@ -66,10 +104,13 @@ class HandTrackingCamera():
 
 
         if self.isTwoLineOverlapped(leftHandpinkyEdge, rightHandIndexEdge):
+            print(rightHandIndexEdge)
             return True
         if self.isTwoLineOverlapped(leftHandpinkyEdge, rightHandUpperEdge):
+            print(rightHandUpperEdge)
             return True
         if self.isTwoLineOverlapped(leftHandpinkyEdge, rightHandpinkyEdge):
+            print(rightHandpinkyEdge)
             return True 
         return False
 
@@ -95,17 +136,28 @@ class HandTrackingCamera():
             return -1
 
     def getRightHandJoints(self):
-        return self.hands["Right"].getJoints()
+        if self.isHandsUpdated["Right"]:
+            return self.hands["Right"].getJoints()
+        else:
+            return None
 
     def getLeftHandJoints(self):
-        return self.hands["Left"].getJoints()
+        if self.isHandsUpdated["Left"]:
+            return self.hands["Left"].getJoints()
+        else:
+            return None
 
     def getRightHandJointsDiff(self):
-        return self.hands["Right"].calculateHandDiff()
+        if self.isHandsUpdated["Right"]:
+            return self.hands["Right"].calculateHandDiff()
+        else:
+            return None 
 
     def getLeftHandJointsDiff(self):
-        return self.hands["Left"].calculateHandDiff()
-
+        if self.isHandsUpdated["Left"]:
+            return self.hands["Left"].calculateHandDiff()
+        else:
+            return None
 
 
 if __name__ == "__main__":

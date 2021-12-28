@@ -5,65 +5,131 @@ from hand import Hand
 from handTrackingCamera import HandTrackingCamera
 import cv2 
 import numpy as np
+from multiprocessing import Process, Queue
+
+import time
+
 class HandTracking():
-    def __init__(self, resultQueue):
+    def __init__(self, upperCameraQueue, lowerCameraQueue, resultQueue):
         self.running = True
-
-        mp_hands = mp.solutions.hands
+        self.upperCameraQueue = upperCameraQueue
+        self.lowerCameraQueue = lowerCameraQueue
         self.resultQueue = resultQueue
-        # rightHand = Hand()
-        # leftHand = Hand()
-        # self.hands = {"left": leftHand, "right": rightHand}
 
-        upperCameraHandler = mp_hands.Hands(
-            max_num_hands=2,
-            model_complexity=0,
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5)
-
-        lowerCameraHandler = mp_hands.Hands(
-            max_num_hands=1,
-            model_complexity=0,
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5)
-
-        self.upperCamera = HandTrackingCamera(3, upperCameraHandler)
-        self.lowerCamera = HandTrackingCamera(0, lowerCameraHandler)
-        
+        self.upperCamera = HandTrackingCamera(None, 3, handNum = 1)
+        self.lowerCamera = HandTrackingCamera(None, 0, handNum = 2)
         pass
 
 
     def run(self):
         rightHand = None
         leftHand = None
-        while self.running:
-            try:
-                upperImage = self.upperCamera.updateHands()
-                lowerImage = self.lowerCamera.updateHands()
 
+
+        # upperImageQueue = Queue()
+        # lowerImageQueue = Queue()
+
+        # upperCamera = HandTrackingCamera(3, handNum = 2)
+        # lowerCamera = HandTrackingCamera(0, handNum = 1)
+
+        # upperImageProcess = Process(target=upperCamera.updateHands, args=(upperImageQueue,))
+        # lowerImageProcess = Process(target=lowerCamera.updateHands, args=(lowerImageQueue,))
+
+        # upperImageProcess.start()
+        # lowerImageProcess.start()
+
+
+        # upperImageProcess = Process(target=upperCameraUpdateHands, args=(upperImageQueue,))
+        # lowerImageProcess = Process(target=lowerCameraUpdateHands, args=(lowerImageQueue,))
+        # upperImageProcess.start()
+        # lowerImageProcess.start()
+
+        while self.running:
+            upperCameraHandTrackingResult = None
+            lowerCameraHandTrackingResult = None
+
+            try:
+                lowerCameraHandTrackingResult = self.lowerCameraQueue.get(0)
+                # print(lowerCameraHandTrackingResult)
+                hand = lowerCameraHandTrackingResult["Right"] if lowerCameraHandTrackingResult["Right"] is not None else lowerCameraHandTrackingResult["Left"]
+                # self.lowerCamera.hands["Right"].updateHandByNPArray(lowerCameraHandTrackingResult["Right"])
+                # self.lowerCamera.hands["Left"].updateHandByNPArray(lowerCameraHandTrackingResult["Left"])
+                self.lowerCamera.hands["Left"].updateHandByNPArray(hand)
             except:
                 pass
-            else:
-                # print("isHandsOverlapped: ", self.upperCamera.isHandsOverlapped())
-                if self.upperCamera.isHandsOverlapped():
-                    rightHand = self.upperCamera.getRightHandJoints()
+            try:
+                upperCameraHandTrackingResult = self.upperCameraQueue.get(0)
+                # if upperCameraHandTrackingResult["Right"] is None and lowerCameraHandTrackingResult["Right"] is not None:
+                #     print("STRANGE 1")
+                #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
+                #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
+
+                # elif upperCameraHandTrackingResult["Left"] is None and lowerCameraHandTrackingResult["Left"] is not None:
+                #     # print("this")
+                #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
+                #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
+                # elif upperCameraHandTrackingResult["Right"] is not None and upperCameraHandTrackingResult["Left"] is not None:
+                #     print("STRANGE 2")
+
+                # else:
+                #     # print("ok")
+                #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
+                #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
+
+
+                if upperCameraHandTrackingResult["Left"] is None and upperCameraHandTrackingResult["Right"] is not None:
+                    self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
+                    self.upperCamera.hands["Right"].updateHandByNPArray(None)
+                else:
+                    # print("ok")
+                    print(upperCameraHandTrackingResult["Right"])
+                    self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
+                    self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
+
+
+
+
+                # print("Right: ", self.upperCamera.getRightHandJoints())
+                # print("Right: ", self.upperCamera.getRightHandJoints() is None, "\n Left: ", self.upperCamera.getLeftHandJoints() is None)
+            except:
+                pass
+
+            if upperCameraHandTrackingResult == None and lowerCameraHandTrackingResult == None:
+                # print("handTracking2.py None")
+                continue
+
+            # startTime = time.time()
+
+            if self.upperCamera.isHandsOverlapped():
+                print("handTracking2.py, isHandsOverlapped")
+                rightHand = self.upperCamera.getRightHandJoints()
+                if leftHand.size != 0:
                     leftHand += self.lowerCamera.getLeftHandJointsDiff()
 
-                else:
-                    rightHand = self.upperCamera.getRightHandJoints()
-                    leftHand = self.upperCamera.getLeftHandJoints()
+            else:
+                print("handTracking2.py, NOT Overlapped")
+                rightHand = self.upperCamera.getRightHandJoints()
+                leftHand = self.upperCamera.getLeftHandJoints()
 
+
+            # print("handTracking2.py ", leftHand)
+            # print({"Right": rightHand, "Left": leftHand})
             self.resultQueue.put({"Right": rightHand, "Left": leftHand})
             
             # if (upperImage != None and lowerImage)
-            try:
-                numpy_vertical_concat = np.concatenate((upperImage, lowerImage), axis=0)
-                cv2.imshow('hands', numpy_vertical_concat)            
-            except:
-                pass
-            if cv2.waitKey(5) & 0xFF == 27:
-                break
+            # try:
+            #     numpy_vertical_concat = np.concatenate((upperImage, lowerImage), axis=0) # concat 0.02
+            #     cv2.imshow('hands', numpy_vertical_concat)            
+            # except:
+            #     pass
+            # if cv2.waitKey(5) & 0xFF == 27:
+            #     break
 
+
+
+            # print(time.time() - startTime)
+            # startTime = time.time()
+                
         return
 
 
@@ -120,6 +186,8 @@ class HandTracking():
 
     def palmPad(self, fingerLandmark):
         dominantFingerXYZ = self.dominantHand.getFingerXYZ(fingerLandmark)
+
+        # print(dominantFingerXYZ)
         dx, dy = self.nonDominantHand.calculateDXYFromPalm(dominantFingerXYZ) 
         #print(dx * 10, dy * 10) 
         self.resultQueue.put("0," + str(dx) + "," + str(dy))
@@ -128,6 +196,14 @@ class HandTracking():
 
 
 
+
+def upperCameraUpdateHands(upperImageQueue):
+    upperCamera = HandTrackingCamera(3, handNum = 2)
+    upperCamera.updateHands(upperImageQueue)
+
+def lowerCameraUpdateHands(lowerImageQueue):
+    lowerCamera = HandTrackingCamera(0, handNum = 1)
+    lowerCamera.updateHands(lowerImageQueue)
 
 
 

@@ -64,7 +64,7 @@ class Window(QMainWindow):
                 self.mouseX -= dx
                 self.mouseY += dy
                 self.cursor.setPos(self.mouseX, self.mouseY)
-                print("dxy: ", dx, dy)
+                # print("dxy: ", dx, dy)
 
     # @pyqtSlot(str)
     # def touchSensingHandler(self, result):
@@ -155,8 +155,12 @@ class PalmPadWindow(QDialog):
                 dx = 0
                 dy = 0
 
-            self.mouseX -= dx
-            self.mouseY += dy
+
+            mouseX, mouseY = self.cursor.pos().x(), self.cursor.pos().y()
+
+            self.mouseX = mouseX - dx
+            self.mouseY = mouseY + dy
+
             self.cursor.setPos(self.mouseX, self.mouseY)
             # print("dxy: ", dx, dy)
 

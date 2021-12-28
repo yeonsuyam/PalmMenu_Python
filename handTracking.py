@@ -4,7 +4,7 @@ from google.protobuf.json_format import MessageToDict
 from hand import Hand
 
 class HandTracking():
-    def __init__(self, imageQueue, resultQueue, results = [("index", "nearestJoint")], dominantHandInfo = "Right"):
+    def __init__(self, imageQueue, resultQueue, results = [("index", "palmPad")], dominantHandInfo = "Right"):
         self.dominantHandInfo = dominantHandInfo
         self.nonDominantHandInfo = "Left" if dominantHandInfo == "Right" else "Right"
         #self.isDominantHand = {dominantHand: 1, nonDominantHand: 0}
@@ -12,7 +12,7 @@ class HandTracking():
         self.imageQueue = imageQueue
         self.resultQueue = resultQueue
 
-        self.funcName2Func = {"nearestJoint": self.getNearestJoint}
+        self.funcName2Func = {"nearestJoint": self.getNearestJoint, "palmPad": self.palmPad}
         self.fingerName2Landmark = {"index": 8, "middle": 12, "ring": 16, "pinky": 20}
         self.returnFunctions = [(self.funcName2Func[funcName], self.fingerName2Landmark[fingerName]) for (fingerName, funcName) in results] # self.getNearestJoint, 8
 
@@ -47,8 +47,9 @@ class HandTracking():
             except:
                 continue
             else:
-                self.updateFingerJoints(image)
-                [func(param) for func, param in self.returnFunctions]
+                isRightHand = self.updateFingerJoints(image)
+                if isRightHand:
+                    [func(param) for func, param in self.returnFunctions]
 
 
     def getImage(self):
@@ -75,18 +76,28 @@ class HandTracking():
 
     #def updateFingerJoints(self, result):
     def updateFingerJoints(self, image):
+        isDominantHand = False
+
+        image_height, image_width, _ = image.shape
         results = self.handExtraction.process(image)
        
         if results == None or results.multi_handedness == None:
-            return
-        if len(results.multi_handedness) != 2:
-            print("Hand Tracking results: ", len(results.multi_handedness))
+            return False
+        
+        handCNT = len(results.multi_handedness)
 
         for handInfo, handLandmarks in zip(results.multi_handedness, results.multi_hand_landmarks):
             handInfoDict = MessageToDict(handInfo)["classification"][0]
-            hand = self.getHand(handInfoDict["label"])
-            hand.updateHandJoints(handLandmarks)
-        return
+            handName = handInfoDict["label"]
+                
+            if handName == self.nonDominantHandInfo and handCNT == 1:
+                hand = self.nonDominantHand
+                hand.updateHandJoints(handLandmarks, image_height, image_width)
+            elif handName == self.dominantHandInfo:
+                hand = self.dominantHand
+                hand.updateHandJoints(handLandmarks, image_height, image_width)
+                isDominantHand = True
+        return isDominantHand
 
 
     def getHand(self, handInfo):
@@ -101,6 +112,27 @@ class HandTracking():
     def getNearestJoint(self, fingerLandmark):
         dominantFingerXYZ = self.dominantHand.getFingerXYZ(fingerLandmark)
         result = self.nonDominantHand.calculateNearestFingerNode(dominantFingerXYZ) # 3, 3
-        self.resultQueue.put(str(result[0]) + "," + str(result[1])) # "3, 3"
+        self.resultQueue.put("1," + str(result[0]) + "," + str(result[1])) # "3, 3"
         
         return
+
+
+    def calculatePlaneXYZ(self):
+        x = nonDominantHand.getPlane()
+
+    def palmPad(self, fingerLandmark):
+        dominantFingerXYZ = self.dominantHand.getFingerXYZ(fingerLandmark)
+        dx, dy = self.nonDominantHand.calculateDXYFromPalm(dominantFingerXYZ) 
+        #print(dx * 10, dy * 10) 
+        self.resultQueue.put("0," + str(dx) + "," + str(dy))
+
+        return
+
+
+
+
+
+
+
+
+

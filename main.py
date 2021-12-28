@@ -11,7 +11,7 @@ import sys
 
 def getImage(q):
     mp_hands = mp.solutions.hands
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     with mp_hands.Hands(
         model_complexity=0,
         min_detection_confidence=0.5,
@@ -50,9 +50,19 @@ if __name__ == '__main__':
     touchSensingProcess = Process(target=touchSensingFunction, args=(touchSensingQueue, ))
     touchSensingProcess.start()
 
+    #userStudy1 = UserStudy1(imageQueue, touchSensingQueue, )
+
     App = QApplication(sys.argv)
     window = Window(touchSensingQueue)
     sys.exit(App.exec_())
+
+     
+
+    #try:
+        #while True:
+            #result = touchSensingQueue.get()
+    #except:
+        #pass
 
     handTrackingProcess.join()
     getImageProcess.join()

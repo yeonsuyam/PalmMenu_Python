@@ -18,8 +18,15 @@ class Hand():
 
 
     def updateHandByNPArray(self, npArray):
+        if npArray is None:
+            for landmark in self.landmarks:
+                for xyz in range(3):
+                    self.jointsDiff[landmark][xyz] = 0
+            return
+
         for landmark in self.landmarks:
             for xyz in range(3):
+                self.jointsDiff[landmark][xyz] = npArray[landmark][xyz] - self.joints[landmark][xyz]
                 self.joints[landmark][xyz] = npArray[landmark][xyz]
         return
 
@@ -37,17 +44,28 @@ class Hand():
         #print(self.joints)
 
     def getFingerXYZ(self, landmarkNum):
-        return self.joints[landmarkNum]
+        print(self.getJoints())
+        if not self.getJoints().any():
+            print("ZEROS")
+            return None
+        else:
+            return self.joints[landmarkNum]
 
 
     def getFingerXYZByName(self, name):
+        if not self.getJoints().any():
+            return None
         return self.joints[self.landmarksInfo[name][-1]]
+    
     
     def calculateNearestFingerNode(self, targetXYZ):
         #return self.calculateNearestFingerNodeByAngle(targetXYZ)
         return self.calculateNearestFingerNodeByNearestNearestAlgorithm(targetXYZ)
 
     def calculateDXYFromPalm(self, fingerXYZ):
+        if fingerXYZ is None:
+            return (0, 0)
+
         # Calculate plane
         joints = self.joints
 

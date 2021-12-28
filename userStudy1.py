@@ -1,6 +1,7 @@
 import mediapipe as mp
 import cv2
 from handTracking2 import HandTracking
+from handTrackingCamera import HandTrackingCamera
 from touchSensing import TouchSensing
 from multiprocessing import Process, Queue
 #from userStudy1 import UserStudy1
@@ -13,9 +14,19 @@ import sys
 from enum import Enum
 from hand import Hand
 
-def handTrackingFunction(resultQueue):
-    handTracking = HandTracking(resultQueue)
+import time
+
+def handTrackingFunction(upperCameraQueue, lowerCameraQueue, resultQueue):
+    handTracking = HandTracking(upperCameraQueue, lowerCameraQueue, resultQueue)
     handTracking.run()
+
+def handTrackingUpperCameraFunction(upperCameraQueue):
+    handTrackingCamera = HandTrackingCamera(upperCameraQueue, 0, handNum = 2)
+    handTrackingCamera.updateHands()
+
+def handTrackingLowerCameraFunction(lowerCameraQueue):
+    handTrackingCamera = HandTrackingCamera(lowerCameraQueue, 3, handNum = 1)
+    handTrackingCamera.updateHands()
 
 
 def touchSensingFunction(q):
@@ -71,7 +82,7 @@ class PalmPad():
         self.rightHand = Hand("Right")
         self.leftHand = Hand("Left")
         self.hands = {"Right": self.rightHand, "Left": self.leftHand}
-        self.touchsensingResult = False
+        self.touchsensingResult = True
 
         self.dominantHandInfo = dominantHandInfo
         self.nonDominantHandInfo = "Left" if dominantHandInfo == "Right" else "Right"
@@ -81,20 +92,19 @@ class PalmPad():
 
 
     def calculate(self, state):
+        startTime = time.time()
         success = self.updateHand()
+
         if success:
             self.functions[state]()
+
+        # print((time.time() - startTime)*1000)
+        startTime = time.time()
 
         return
 
 
     def updateHand(self):
-        try:
-            touchsensingResult = self.touchSensingResultQueue.get(0)
-        except:
-            pass
-        else:
-            self.touchsensingResult = int(touchsensingResult)
         try:
             handTrackingResult = self.handTrackingResultQueue.get(0)
         except:
@@ -102,6 +112,14 @@ class PalmPad():
         else:
             self.hands["Right"].updateHandByNPArray(handTrackingResult["Right"])
             self.hands["Left"].updateHandByNPArray(handTrackingResult["Left"])
+
+        # try:
+        #     touchsensingResult = self.touchSensingResultQueue.get(0)
+        # except:
+        #     pass
+        # else:
+        #     self.touchsensingResult = int(touchsensingResult)
+
 
             return True
 
@@ -115,6 +133,7 @@ class PalmPad():
 
     def palmPad(self):
         dominantFingerXYZ = self.dominantHand().getFingerXYZByName(self.dominantHandFinger)
+        # print("userStudy1, palmPad()", dominantFingerXYZ)
         dx, dy = self.nonDominantHand().calculateDXYFromPalm(dominantFingerXYZ) 
         #print(dx * 10, dy * 10) 
         # print("0," + str(dx) + "," + str(dy))
@@ -136,17 +155,22 @@ class PalmPad():
 
 
 if __name__ == '__main__':
+    upperCameraQueue = Queue()
+    lowerCameraQueue = Queue()
     handTrackingResultQueue = Queue()
-    handTrackingProcess = Process(target=handTrackingFunction, args=(handTrackingResultQueue,))
-
     touchSensingResultQueue = Queue()
-    touchSensingProcess = Process(target=touchSensingFunction, args=(touchSensingResultQueue,))
-
     clientQueue = Queue()
+
+    upperCameraProcess = Process(target=handTrackingUpperCameraFunction, args=(upperCameraQueue,))
+    lowerCameraProcess = Process(target=handTrackingLowerCameraFunction, args=(lowerCameraQueue,))
+    handTrackingProcess = Process(target=handTrackingFunction, args=(upperCameraQueue, lowerCameraQueue, handTrackingResultQueue,))
+    # touchSensingProcess = Process(target=touchSensingFunction, args=(touchSensingResultQueue,))    
     userStudy1Process = Process(target=userStudy1Function, args=(handTrackingResultQueue, touchSensingResultQueue, clientQueue))
 
+    upperCameraProcess.start()
+    lowerCameraProcess.start()
     handTrackingProcess.start()
-    touchSensingProcess.start()
+    # touchSensingProcess.start()
     userStudy1Process.start()
 
     App = QApplication(sys.argv)
@@ -177,5 +201,5 @@ if __name__ == '__main__':
 
 
     handTrackingProcess.join()
-    touchSensingProcess.join()
+    # touchSensingProcess.join()
     userStudy1Process.join()
