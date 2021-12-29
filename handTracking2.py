@@ -25,25 +25,6 @@ class HandTracking():
         rightHand = None
         leftHand = None
 
-
-        # upperImageQueue = Queue()
-        # lowerImageQueue = Queue()
-
-        # upperCamera = HandTrackingCamera(3, handNum = 2)
-        # lowerCamera = HandTrackingCamera(0, handNum = 1)
-
-        # upperImageProcess = Process(target=upperCamera.updateHands, args=(upperImageQueue,))
-        # lowerImageProcess = Process(target=lowerCamera.updateHands, args=(lowerImageQueue,))
-
-        # upperImageProcess.start()
-        # lowerImageProcess.start()
-
-
-        # upperImageProcess = Process(target=upperCameraUpdateHands, args=(upperImageQueue,))
-        # lowerImageProcess = Process(target=lowerCameraUpdateHands, args=(lowerImageQueue,))
-        # upperImageProcess.start()
-        # lowerImageProcess.start()
-
         while self.running:
             upperCameraHandTrackingResult = None
             lowerCameraHandTrackingResult = None
@@ -51,26 +32,11 @@ class HandTracking():
             try:
                 lowerCameraHandTrackingResult = self.lowerCameraQueue.get(0)
                 hand = lowerCameraHandTrackingResult["Right"] if lowerCameraHandTrackingResult["Right"] is not None else lowerCameraHandTrackingResult["Left"]
-                # self.lowerCamera.hands["Right"].updateHandByNPArray(lowerCameraHandTrackingResult["Right"])
-                # self.lowerCamera.hands["Left"].updateHandByNPArray(lowerCameraHandTrackingResult["Left"])
                 self.lowerCamera.hands["Left"].updateHandByNPArray(hand)
             except:
                 pass
             try:
                 upperCameraHandTrackingResult = self.upperCameraQueue.get(0)
-                # if upperCameraHandTrackingResult["Right"] is None and lowerCameraHandTrackingResult["Right"] is not None:
-                #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
-                #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
-
-                # elif upperCameraHandTrackingResult["Left"] is None and lowerCameraHandTrackingResult["Left"] is not None:
-                #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
-                #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
-                # elif upperCameraHandTrackingResult["Right"] is not None and upperCameraHandTrackingResult["Left"] is not None:
-
-                # else:
-                #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
-                #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
-
 
                 if upperCameraHandTrackingResult["Left"] is None and upperCameraHandTrackingResult["Right"] is not None:
                     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
@@ -86,32 +52,21 @@ class HandTracking():
 
             # startTime = time.time()
 
-            if self.upperCamera.isHandsOverlapped():
-                print("handTracking2.py, isHandsOverlapped")
-                rightHand = self.upperCamera.getRightHandJoints()
-                if leftHand.size != 0:
-                    leftHand += self.lowerCamera.getLeftHandJointsDiff()
+            rightHand = self.upperCamera.getRightHandJoints()
+            leftHand = self.upperCamera.getLeftHandJoints()
+            # if self.upperCamera.isHandsOverlapped():
+            #     # print("handTracking2.py, isHandsOverlapped")
+            #     rightHand = self.upperCamera.getRightHandJoints()
+            #     if leftHand.size is not None:
+            #         leftHand += self.lowerCamera.getLeftHandJointsDiff()
 
-            else:
-                print("handTracking2.py, NOT Overlapped")
-                rightHand = self.upperCamera.getRightHandJoints()
-                leftHand = self.upperCamera.getLeftHandJoints()
+            # else:
+            #     # print("handTracking2.py, NOT Overlapped")
+            #     rightHand = self.upperCamera.getRightHandJoints()
+            #     leftHand = self.upperCamera.getLeftHandJoints()
 
 
             self.resultQueue.put({"Right": rightHand, "Left": leftHand})
-            
-            # if (upperImage != None and lowerImage)
-            # try:
-            #     numpy_vertical_concat = np.concatenate((upperImage, lowerImage), axis=0) # concat 0.02
-            #     cv2.imshow('hands', numpy_vertical_concat)            
-            # except:
-            #     pass
-            # if cv2.waitKey(5) & 0xFF == 27:
-            #     break
-
-
-
-            # startTime = time.time()
                 
         return
 
@@ -121,7 +76,6 @@ class HandTracking():
         return
 
 
-    #def updateFingerJoints(self, result):
     def updateFingerJoints(self, image):
         isDominantHand = False
 

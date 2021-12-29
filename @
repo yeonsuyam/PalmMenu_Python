@@ -1,0 +1,169 @@
+import mediapipe as mp
+import cv2
+from handTracking import HandTracking
+from touchSensing import TouchSensing
+from multiprocessing import Process, Queue
+#from userStudy1 import UserStudy1
+#from userStudy1Client import Window, PalmPad
+from palmPadClient import Window
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import QApplication, QMainWindow
+import sys
+
+
+mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
+mp_hands = mp.solutions.hands
+
+class UserStudy1():
+    def __init__(self):
+        pass
+
+    def run(self):
+        imageQueue = Queue()
+        getImageProcess = Process(target=self.getImage, args=(imageQueue,))
+
+        handTrackingResultQueue = Queue()
+        handTrackingProcess = Process(target=self.handTrackingFunction, args=(imageQueue, handTrackingResultQueue))
+
+        touchSensingResultQueue = Queue()
+        touchSensingProcess = Process(target=self.touchSensingFunction, args=(touchSensingResultQueue,))
+
+        getImageProcess.start()
+            
+        handTrackingProcess.start()
+        touchSensingProcess.start()
+
+        App = QApplication(sys.argv)
+        window = Window(handTrackingResultQueue, touchSensingResultQueue)
+        sys.exit(App.exec_())
+
+        getImageProcess.join()
+        handTrackingProcess.join()
+        touchSensingProcess.join()
+        return
+
+
+    def getImage(self, q):
+        mp_hands = mp.solutions.hands
+        cap = cv2.VideoCapture(0)
+        with mp_hands.Hands(
+            model_complexity=0,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5) as hands:
+            
+            while cap.isOpened():
+                success, image = cap.read()
+
+                if not success:
+                    print("Empty camera frame")
+                else:
+                    image.flags.writeable = False
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    image = cv2.flip(image, 1)
+                    q.put(image)
+                    results = hands.process(image)
+                    
+                    if not results.multi_hand_landmarks:
+                        continue
+                    image.flags.writeable = True
+                    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                    for hand_landmarks in results.multi_hand_landmarks:
+                        mp_drawing.draw_landmarks(
+                            image,
+                            hand_landmarks,
+                            mp_hands.HAND_CONNECTIONS,
+                            mp_drawing_styles.get_default_hand_landmarks_style(),
+                            mp_drawing_styles.get_default_hand_connections_style())
+
+                #cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
+                cv2.imshow('MediaPipe Hands', image)
+                if cv2.waitKey(5) & 0xFF == 27:
+                    break
+
+            cap.release()
+    
+    def handTrackingFunction(self, q1, q2):
+        handTracking = HandTracking(q1, q2)
+        handTracking.run()
+
+
+    def touchSensingFunction(self, q):
+        touchSensing = TouchSensing(q, port="/dev/cu.usbserial-AL03KLV2", baudrate=115200)
+        touchSensing.getSensorData()
+
+
+def getImage(q):
+    mp_hands = mp.solutions.hands
+    cap = cv2.VideoCapture(0)
+    with mp_hands.Hands(
+        model_complexity=0,
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5) as hands:
+        
+        while cap.isOpened():
+            success, image = cap.read()
+
+            if not success:
+                print("Empty camera frame")
+            else:
+                image.flags.writeable = False
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                image = cv2.flip(image, 1)
+                q.put(image)
+                results = hands.process(image)
+                
+                if not results.multi_hand_landmarks:
+                    continue
+                image.flags.writeable = True
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                for hand_landmarks in results.multi_hand_landmarks:
+                    mp_drawing.draw_landmarks(
+                        image,
+                        hand_landmarks,
+                        mp_hands.HAND_CONNECTIONS,
+                        mp_drawing_styles.get_default_hand_landmarks_style(),
+                        mp_drawing_styles.get_default_hand_connections_style())
+
+            #cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
+            cv2.imshow('MediaPipe Hands', image)
+            if cv2.waitKey(5) & 0xFF == 27:
+                break
+
+        cap.release()
+
+def handTrackingFunction(q1, q2):
+    handTracking = HandTracking(q1, q2)
+    handTracking.run()
+
+
+def touchSensingFunction(q):
+    touchSensing = TouchSensing(q, port="/dev/cu.usbserial-AL03KLV2", baudrate=115200)
+    touchSensing.getSensorData()
+
+
+if __name__ == '__main__':
+    # userStudy1 = UserStudy1()
+    # userStudy1.run()
+
+    imageQueue = Queue()
+    getImageProcess = Process(target=getImage, args=(imageQueue,))
+
+    handTrackingResultQueue = Queue()
+    handTrackingProcess = Process(target=handTrackingFunction, args=(imageQueue, handTrackingResultQueue))
+
+    touchSensingResultQueue = Queue()
+    touchSensingProcess = Process(target=touchSensingFunction, args=(touchSensingResultQueue,))
+
+    getImageProcess.start()
+    handTrackingProcess.start()
+    touchSensingProcess.start()
+
+    App = QApplication(sys.argv)
+    window = Window(handTrackingResultQueue, touchSensingResultQueue)
+    #window = Window()
+    sys.exit(App.exec_())
+
+    getImageProcess.join()
+    handTrackingProcess.join()
+    touchSensingProcess.join()

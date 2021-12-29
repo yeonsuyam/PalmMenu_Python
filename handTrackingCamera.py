@@ -13,13 +13,6 @@ class HandTrackingCamera():
 
         self.running = True
         self.cameraId = cameraId
-        # self.camera = cv2.VideoCapture(cameraId)
-        # mp_hands = mp.solutions.hands
-        # self.handTrackingHandler = mp_hands.Hands(
-        #     max_num_hands=handNum,
-        #     model_complexity=0,
-        #     min_detection_confidence=0.5,
-        #     min_tracking_confidence=0.5)
         self.handNum = handNum
         rightHand = Hand("Right")
         leftHand = Hand("Left")
@@ -34,7 +27,6 @@ class HandTrackingCamera():
 
 
     def updateHands(self):
-        # startTime = time.time()
         image = None
 
         handTrackingHandler = mp.solutions.hands.Hands(
@@ -95,19 +87,15 @@ class HandTrackingCamera():
 
 
         if self.isTwoLineOverlapped(leftHandpinkyEdge, rightHandIndexEdge):
-            # print(rightHandIndexEdge)
             return True
         if self.isTwoLineOverlapped(leftHandpinkyEdge, rightHandUpperEdge):
-            # print(rightHandUpperEdge)
             return True
         if self.isTwoLineOverlapped(leftHandpinkyEdge, rightHandpinkyEdge):
-            # print(rightHandpinkyEdge)
             return True 
         return False
 
 
     def isTwoLineOverlapped(self, line1, line2):
-        # https://gaussian37.github.io/math-algorithm-line_intersection/
         p1, p2 = line1
         p3, p4 = line2
 

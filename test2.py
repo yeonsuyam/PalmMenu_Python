@@ -4,18 +4,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import * 
 import sys
   
-
-class HoverButton(QPushButton):
-    def __init__(self, parent=None):
-        super(HoverButton, self).__init__(parent)
-        self.setStyleSheet("background-color : yellow; border-radius : 50;")
-
-    def resizeEvent(self, event):
-        self.setMask(QRegion(self.rect(), QRegion.Ellipse))
-        QPushButton.resizeEvent(self, event)
-
-
-
+  
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -31,14 +20,27 @@ class Window(QMainWindow):
   
         # showing all the widgets
         self.show()
-
+  
+    # method for widgets
     def UiComponents(self):
-        button = HoverButton(self)
-        button.setGeometry(200, 150, 100, 100)
+  
+        # creating a push button
+        button = QPushButton("CLICK", self)
+  
+        # setting geometry of button
+        button.setGeometry(200, 150, 100, 40)
+  
+        # changing color of button
+        button.setStyleSheet("background-color : yellow; border-radius : 50; border : 2px solid black")
+  
+        # adding action to a button
         button.clicked.connect(self.clickme)
+  
   
     # action method
     def clickme(self):
+  
+  
         # printing pressed
         print("pressed")
   

@@ -5,7 +5,7 @@ from handTrackingCamera import HandTrackingCamera
 from touchSensing import TouchSensing
 from multiprocessing import Process, Queue
 #from userStudy1 import UserStudy1
-from userStudy1Client2 import Window, PalmPadWindow, PalmMenuWindow
+from userStudy1Client2 import PalmPadWindow, PalmMenuWindow
 from palmPadClient import Window
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import * 
@@ -34,8 +34,8 @@ def touchSensingFunction(q):
     touchSensing.getSensorData()
 
 
-def userStudy1Function(handTrackingQueue, touchSensingQueue, resultQueue):
-    userStudy1 = UserStudy1(handTrackingQueue, touchSensingQueue, resultQueue)
+def userStudy1Function(handTrackingQueue, touchSensingQueue, palmPadResultQueue, palmMenuResultQueue):
+    userStudy1 = UserStudy1(handTrackingQueue, touchSensingQueue, palmPadResultQueue, palmMenuResultQueue)
     userStudy1.run()
 
 
@@ -46,11 +46,11 @@ class State(Enum):
 
 
 class UserStudy1():
-    def __init__(self, handTrackingQueue, touchSensingQueue, resultQueue, dominantHandInfo = "Right"):
+    def __init__(self, handTrackingQueue, touchSensingQueue, palmPadResultQueue, palmMenuResultQueue, dominantHandInfo = "Right"):
         self.running = True
         self.state = State.PalmPad
 
-        self.palmPad = PalmPad(handTrackingQueue, touchSensingQueue, resultQueue)
+        self.palmPad = PalmPad(handTrackingQueue, touchSensingQueue, palmPadResultQueue, palmMenuResultQueue)
         # self.palmMenu = PalmMenu(handTrackingQueue)
         # self.handProcessing = {State.PalmPad: self.palmPad, State.PalmMenu: self.palmMenu}
 
@@ -74,21 +74,25 @@ class UserStudy1():
             #     pass
 
 class PalmPad():
-    def __init__(self, handTrackingResultQueue, touchSensingResultQueue, resultQueue, dominantHandInfo = "Right"):
+    def __init__(self, handTrackingResultQueue, touchSensingResultQueue, palmPadResultQueue, palmMenuResultQueue, dominantHandInfo = "Right"):
         self.handTrackingResultQueue = handTrackingResultQueue
         self.touchSensingResultQueue = touchSensingResultQueue
-        self.resultQueue = resultQueue
+        self.palmPadResultQueue = palmPadResultQueue
+        self.palmMenuResultQueue = palmMenuResultQueue
+
 
         self.rightHand = Hand("Right")
         self.leftHand = Hand("Left")
         self.hands = {"Right": self.rightHand, "Left": self.leftHand}
-        self.touchsensingResult = True
+        self.touchsensingResult = False
 
         self.dominantHandInfo = dominantHandInfo
         self.nonDominantHandInfo = "Left" if dominantHandInfo == "Right" else "Right"
         self.dominantHandFinger = "index" # Index Finger
 
         self.functions = {State.PalmPad: self.palmPad, State.PalmMenu: self.palmMenu}
+        self.isCalculateDXYAfterTouchDown = False
+
 
 
     def calculate(self, state):
@@ -96,7 +100,9 @@ class PalmPad():
         success = self.updateHand()
 
         if success:
-            self.functions[state]()
+            # self.functions[state]()
+            self.palmPad()
+            self.palmMenu()
 
         startTime = time.time()
 
@@ -105,21 +111,19 @@ class PalmPad():
 
     def updateHand(self):
         try:
+            touchsensingResult = self.touchSensingResultQueue.get(0)
+        except:
+            pass
+        else:
+            self.touchsensingResult = touchsensingResult
+        try:
             handTrackingResult = self.handTrackingResultQueue.get(0)
         except:
-            return False
+            pass
         else:
-            self.hands["Right"].updateHandByNPArray(handTrackingResult["Right"])
-            self.hands["Left"].updateHandByNPArray(handTrackingResult["Left"])
-
-        # try:
-        #     touchsensingResult = self.touchSensingResultQueue.get(0)
-        # except:
-        #     pass
-        # else:
-        #     self.touchsensingResult = int(touchsensingResult)
-
-
+            if handTrackingResult is not None:
+                self.hands["Right"].updateHandByNPArray(handTrackingResult["Right"])
+                self.hands["Left"].updateHandByNPArray(handTrackingResult["Left"])
             return True
 
 
@@ -131,41 +135,67 @@ class PalmPad():
 
 
     def palmPad(self):
-        dominantFingerXYZ = self.dominantHand().getFingerXYZByName(self.dominantHandFinger)
-        dx, dy = self.nonDominantHand().calculateDXYFromPalm(dominantFingerXYZ) 
-        if self.touchsensingResult:
-            self.resultQueue.put("0," + str(dx) + "," + str(dy))
+        # print("palmPAD")
 
+        # if self.touchsensingResult == 2: # Touch Down State
+        #     self.palmPadResultQueue.put("0," + str(dx) + "," + str(dy) + "\n")
+        #     return
+        
+        if self.touchsensingResult == 1: # Touch Down Event
+            dominantFingerXYZ = self.dominantHand().getFingerXYZByName(self.dominantHandFinger)
+            dx, dy = self.nonDominantHand().calculateDXYFromPalm(dominantFingerXYZ)
+            
+            if self.isCalculateDXYAfterTouchDown:
+                self.palmPadResultQueue.put("0," + str(dx) + "," + str(dy) + "\n")
+            else:
+                print("0," + str(dx) + "," + str(dy) + "\n")
+
+            self.isCalculateDXYAfterTouchDown = True
+            return
+
+        elif self.touchsensingResult == -1: # Tap
+            self.touchsensingResult = 0
+            self.palmPadResultQueue.put("0,999,999")
+            self.isCalculateDXYAfterTouchDown = False
+            pass
+
+        elif self.touchsensingResult == 0: # Touch Up
+            self.isCalculateDXYAfterTouchDown = False
         # return "0," + str(dx) + "," + str(dy)
 
 
     def palmMenu(self):
-        dominantFingerXYZ = self.dominantHand().getFingerXYZByName(fingerLandmark)
+        # print("palmMENU")
+        dominantFingerXYZ = self.dominantHand().getFingerXYZByName(self.dominantHandFinger)
+        if dominantFingerXYZ is None:
+            return
+
         result = self.nonDominantHand().calculateNearestFingerNode(dominantFingerXYZ) # 3, 3
-        if self.touchsensingResult:
-            self.resultQueue.put("1," + str(result[0]) + "," + str(result[1])) # "3, 3"
-        
+        if self.touchsensingResult == 2:
+            self.palmMenuResultQueue.put("1," + str(result[0]) + "," + str(result[1]) + "\n") # "3, 3"
+            # print("[UserStudy1.py]" + "1," + str(result[0]) + "," + str(result[1]) + "\n")
         # return "1," + str(result[0]) + "," + str(result[1])
 
-
+ 
 
 if __name__ == '__main__':
     upperCameraQueue = Queue()
     lowerCameraQueue = Queue()
     handTrackingResultQueue = Queue()
     touchSensingResultQueue = Queue()
-    clientQueue = Queue()
+    palmPadResultQueue = Queue()
+    palmMenuResultQueue = Queue()
 
     upperCameraProcess = Process(target=handTrackingUpperCameraFunction, args=(upperCameraQueue,))
     lowerCameraProcess = Process(target=handTrackingLowerCameraFunction, args=(lowerCameraQueue,))
     handTrackingProcess = Process(target=handTrackingFunction, args=(upperCameraQueue, lowerCameraQueue, handTrackingResultQueue,))
-    # touchSensingProcess = Process(target=touchSensingFunction, args=(touchSensingResultQueue,))    
-    userStudy1Process = Process(target=userStudy1Function, args=(handTrackingResultQueue, touchSensingResultQueue, clientQueue))
+    touchSensingProcess = Process(target=touchSensingFunction, args=(touchSensingResultQueue,))    
+    userStudy1Process = Process(target=userStudy1Function, args=(handTrackingResultQueue, touchSensingResultQueue, palmPadResultQueue, palmMenuResultQueue, ))
 
     upperCameraProcess.start()
     lowerCameraProcess.start()
     handTrackingProcess.start()
-    # touchSensingProcess.start()
+    touchSensingProcess.start()
     userStudy1Process.start()
 
     App = QApplication(sys.argv)
@@ -178,8 +208,8 @@ if __name__ == '__main__':
     random.shuffle(palmMenuTasks)
     random.shuffle(palmPadTasks)
 
-    palmPadWindow = PalmPadWindow(widget, palmPadTasks, clientQueue)
-    palmMenuWindow = PalmMenuWindow(widget, palmMenuTasks, clientQueue)
+    palmPadWindow = PalmPadWindow(widget, palmPadTasks, palmPadResultQueue)
+    palmMenuWindow = PalmMenuWindow(widget, palmMenuTasks, palmMenuResultQueue)
 
     widget.addWidget(palmPadWindow)
     widget.addWidget(palmMenuWindow)
@@ -196,5 +226,5 @@ if __name__ == '__main__':
 
 
     handTrackingProcess.join()
-    # touchSensingProcess.join()
+    touchSensingProcess.join()
     userStudy1Process.join()

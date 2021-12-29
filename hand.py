@@ -56,7 +56,6 @@ class Hand():
     
 
     def calculateNearestFingerNode(self, targetXYZ):
-        #return self.calculateNearestFingerNodeByAngle(targetXYZ)
         return self.calculateNearestFingerNodeByNearestNearestAlgorithm(targetXYZ)
 
     def calculateDXYFromPalm(self, fingerXYZ):
@@ -69,7 +68,6 @@ class Hand():
         xVector, yVector = self.calculateXYVector(joints)
         pointVector = np.array(fingerXYZ) - np.array(joints[0])
 
-        #if xVector == np.array([0, 0, 0]) or yVector == np.array([0, 0, 0]):
         if not np.any(xVector) or not np.any(yVector):
             return (0, 0)
 
@@ -81,7 +79,10 @@ class Hand():
         self.x = x
         self.y = y
         
-        return (dx, dy)
+        if dx ** 2 + dy ** 2 > 80 ** 2: 
+            return (0, 0)
+        else:
+            return (dx, dy)
 
 
     def calculateXYVector(self, joints):

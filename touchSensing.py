@@ -1,6 +1,7 @@
 import serial
 from finger import Finger
 from multiprocessing import Process, Queue
+import time 
 
 class TouchSensing():
     def __init__(self, touchSensingQueue, port="COM4", baudrate=115200, fingers=[2]):
@@ -14,6 +15,8 @@ class TouchSensing():
         for fingerNum in fingers:
             finger = Finger()
             self.fingers[fingerNum] = finger
+
+        # self.touchDownLocation = x, y
         
         pass
 
@@ -45,9 +48,10 @@ class TouchSensing():
     def updateTouchState(self, fingerNum, touchSensorData):
         result = self.fingers[fingerNum].updateTouchState(touchSensorData) # 1 if TouchDown, 0 if TouchUp
 
+        #TODO: Detecting tap
         if result != None:
             #self.touchSensingQueue.put((fingerNum, result))
-            self.touchSensingQueue.put(str(result))
+            self.touchSensingQueue.put(result)
 
         return
 
