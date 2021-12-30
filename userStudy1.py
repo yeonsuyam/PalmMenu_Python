@@ -134,6 +134,29 @@ class PalmPad():
         return self.hands[self.nonDominantHandInfo]
 
 
+    def addAcceleration(self, dx, dy):
+        if dx == 0 and dy == 0:
+            return 0, 0
+        else:
+            dt = time.time() - self.updateTime
+            self.updateTime = time.time()
+            
+        speed = (dx ** 2 + dy ** 2) ** 0.5 / dt
+
+        # print("[UserStudy1.py] dx: ", dx, " / dy: ", dy, " / dt: ", dt, " / speed: ", speed)
+        print("[UserStudy1.py] dt: ", dt, " / speed: ", speed)
+        if (speed < 10):
+            accFactor = (1.3 / 10) * speed
+        elif (speed < 130):
+            accFactor = 1.3
+        elif (speed < 430):
+            accFactor = (3.2 / 300) * (speed - 130) + 1.3
+        else:
+            accFactor = 4.5
+
+        return dx * accFactor, dy * accFactor
+
+
     def palmPad(self):
         # print("palmPAD")
 
@@ -144,6 +167,7 @@ class PalmPad():
         if self.touchsensingResult == 1: # Touch Down Event
             dominantFingerXYZ = self.dominantHand().getFingerXYZByName(self.dominantHandFinger)
             dx, dy = self.nonDominantHand().calculateDXYFromPalm(dominantFingerXYZ)
+            dx, dy = self.addAcceleration(dx, dy)
             
             if self.isCalculateDXYAfterTouchDown:
                 self.palmPadResultQueue.put("0," + str(dx) + "," + str(dy) + "\n")

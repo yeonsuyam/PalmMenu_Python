@@ -79,7 +79,7 @@ class Hand():
         self.x = x
         self.y = y
         
-        if dx ** 2 + dy ** 2 > 80 ** 2: 
+        if dx ** 2 + dy ** 2 > 30 ** 2: 
             return (0, 0)
         else:
             return (dx, dy)
@@ -93,11 +93,14 @@ class Hand():
 
 
     def calculateProjectedVectorSize(self, xVector, yVector, pointVector):
-        pointVectorProjectedX = np.dot(xVector, pointVector) / (np.dot(xVector, xVector)) ** 0.5
-        pointVectorProjectedY = np.dot(yVector, pointVector) / (np.dot(yVector, yVector)) ** 0.5
+        # pointVectorProjectedX = np.dot(xVector, pointVector) / (np.dot(xVector, xVector)) ** 0.5
+        # pointVectorProjectedY = np.dot(yVector, pointVector) / (np.dot(yVector, yVector)) ** 0.5
 
-        x = np.dot(pointVectorProjectedX, pointVectorProjectedX) ** 0.5
-        y = np.dot(pointVectorProjectedY, pointVectorProjectedY) ** 0.5 
+        # x = np.dot(pointVectorProjectedX, pointVectorProjectedX) ** 0.5
+        # y = np.dot(pointVectorProjectedY, pointVectorProjectedY) ** 0.5 
+
+        x = np.dot(xVector, pointVector) / np.dot(xVector, xVector) * 100
+        y = np.dot(yVector, pointVector) / np.dot(yVector, yVector) * 100
 
         return x, y
 
