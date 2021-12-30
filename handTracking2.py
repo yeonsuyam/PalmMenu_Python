@@ -29,12 +29,14 @@ class HandTracking():
             upperCameraHandTrackingResult = None
             lowerCameraHandTrackingResult = None
 
-            try:
-                lowerCameraHandTrackingResult = self.lowerCameraQueue.get(0)
-                hand = lowerCameraHandTrackingResult["Right"] if lowerCameraHandTrackingResult["Right"] is not None else lowerCameraHandTrackingResult["Left"]
-                self.lowerCamera.hands["Left"].updateHandByNPArray(hand)
-            except:
-                pass
+            # try:
+            #     lowerCameraHandTrackingResult = self.lowerCameraQueue.get(0)
+            #     hand = lowerCameraHandTrackingResult["Right"] if lowerCameraHandTrackingResult["Right"] is not None else lowerCameraHandTrackingResult["Left"]
+            #     self.lowerCamera.hands["Left"].updateHandByNPArray(hand)
+            # except:
+            #     pass
+
+
             try:
                 upperCameraHandTrackingResult = self.upperCameraQueue.get(0)
 

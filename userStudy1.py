@@ -211,13 +211,13 @@ if __name__ == '__main__':
     palmMenuResultQueue = Queue()
 
     upperCameraProcess = Process(target=handTrackingUpperCameraFunction, args=(upperCameraQueue,))
-    lowerCameraProcess = Process(target=handTrackingLowerCameraFunction, args=(lowerCameraQueue,))
+    # lowerCameraProcess = Process(target=handTrackingLowerCameraFunction, args=(lowerCameraQueue,))
     handTrackingProcess = Process(target=handTrackingFunction, args=(upperCameraQueue, lowerCameraQueue, handTrackingResultQueue,))
     touchSensingProcess = Process(target=touchSensingFunction, args=(touchSensingResultQueue,))    
     userStudy1Process = Process(target=userStudy1Function, args=(handTrackingResultQueue, touchSensingResultQueue, palmPadResultQueue, palmMenuResultQueue, ))
 
     upperCameraProcess.start()
-    lowerCameraProcess.start()
+    # lowerCameraProcess.start()
     handTrackingProcess.start()
     touchSensingProcess.start()
     userStudy1Process.start()
