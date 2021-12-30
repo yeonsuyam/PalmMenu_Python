@@ -68,14 +68,19 @@ class Hand():
         xVector, yVector = self.calculateXYVector(joints)
         pointVector = np.array(fingerXYZ) - np.array(joints[0])
 
+        # print("[hand.py] xVector: ", np.dot(xVector, xVector), " / yVector: ", np.dot(yVector, yVector), " / pointVector: ", np.dot(pointVector, pointVector))
+
         if not np.any(xVector) or not np.any(yVector):
             return (0, 0)
 
         x, y = self.calculateProjectedVectorSize(xVector, yVector, pointVector)
-       
+        # print("[hand.py] x: ", x, " / y: ", y)
+
         dx = self.x - x
         dy = self.y - y
 
+
+        # print("[hand.py] dx: ", dx, " / dy: ", dy)
         self.x = x
         self.y = y
         

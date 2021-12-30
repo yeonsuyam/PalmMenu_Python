@@ -93,7 +93,8 @@ class PalmPad():
         self.functions = {State.PalmPad: self.palmPad, State.PalmMenu: self.palmMenu}
         self.isCalculateDXYAfterTouchDown = False
 
-
+        # For PalmPad Acceleration
+        self.updateTime = time.time()
 
     def calculate(self, state):
         startTime = time.time()
@@ -171,8 +172,8 @@ class PalmPad():
             
             if self.isCalculateDXYAfterTouchDown:
                 self.palmPadResultQueue.put("0," + str(dx) + "," + str(dy) + "\n")
-            else:
-                print("0," + str(dx) + "," + str(dy) + "\n")
+            # else:
+            #     print("0," + str(dx) + "," + str(dy) + "\n")
 
             self.isCalculateDXYAfterTouchDown = True
             return
