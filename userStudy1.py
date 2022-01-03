@@ -21,7 +21,7 @@ def handTrackingFunction(upperCameraQueue, lowerCameraQueue, resultQueue):
     handTracking.run()
 
 def handTrackingUpperCameraFunction(upperCameraQueue):
-    handTrackingCamera = HandTrackingCamera(upperCameraQueue, 0, handNum = 2)
+    handTrackingCamera = HandTrackingCamera(upperCameraQueue, 0, handNum = 1)
     handTrackingCamera.updateHands()
 
 def handTrackingLowerCameraFunction(lowerCameraQueue):
@@ -93,7 +93,8 @@ class PalmPad():
         self.functions = {State.PalmPad: self.palmPad, State.PalmMenu: self.palmMenu}
         self.isCalculateDXYAfterTouchDown = False
 
-
+        # For PalmPad Acceleration
+        self.updateTime = time.time()
 
     def calculate(self, state):
         startTime = time.time()
@@ -144,7 +145,6 @@ class PalmPad():
         speed = (dx ** 2 + dy ** 2) ** 0.5 / dt
 
         # print("[UserStudy1.py] dx: ", dx, " / dy: ", dy, " / dt: ", dt, " / speed: ", speed)
-        print("[UserStudy1.py] dt: ", dt, " / speed: ", speed)
         if (speed < 10):
             accFactor = (1.3 / 10) * speed
         elif (speed < 130):
@@ -171,8 +171,8 @@ class PalmPad():
             
             if self.isCalculateDXYAfterTouchDown:
                 self.palmPadResultQueue.put("0," + str(dx) + "," + str(dy) + "\n")
-            else:
-                print("0," + str(dx) + "," + str(dy) + "\n")
+            # else:
+            #     print("0," + str(dx) + "," + str(dy) + "\n")
 
             self.isCalculateDXYAfterTouchDown = True
             return
@@ -195,7 +195,7 @@ class PalmPad():
             return
 
         result = self.nonDominantHand().calculateNearestFingerNode(dominantFingerXYZ) # 3, 3
-        if self.touchsensingResult == 2:
+        if self.touchsensingResult == 1:
             self.palmMenuResultQueue.put("1," + str(result[0]) + "," + str(result[1]) + "\n") # "3, 3"
             # print("[UserStudy1.py]" + "1," + str(result[0]) + "," + str(result[1]) + "\n")
         # return "1," + str(result[0]) + "," + str(result[1])

@@ -142,7 +142,7 @@ class PalmPadWindow(QDialog):
 
 
     def eventFilter(self, object, event):
-        if event.type() == QEvent.Enter or event.type() == QEvent.MouseButtonPress: #https://het.as.utexas.edu/HET/Software/PyQt/qevent.html
+        if event.type() == QEvent.Enter or event.type() == QEvent.MouseButtonPress or event.type() == QEvent.ToolTip: #https://het.as.utexas.edu/HET/Software/PyQt/qevent.html
             print("on button")
             self.isOnButton = True
             return True

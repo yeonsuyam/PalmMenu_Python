@@ -51,8 +51,8 @@ class HandTrackingCamera():
 
                     results = handTrackingHandler.process(image)
                     
-                    # image.flags.writeable = True
-                    # image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                    image.flags.writeable = True
+                    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
                     for handInfo, handLandmarks in zip(results.multi_handedness, results.multi_hand_landmarks):
                         handName = MessageToDict(handInfo)["classification"][0]["label"]
@@ -60,16 +60,16 @@ class HandTrackingCamera():
                         self.hands[handName].updateHandJoints(handLandmarks, image_height, image_width)
                         self.isHandsUpdated[handName] = True
                         
-                        # self.mp_drawing.draw_landmarks(
-                        #     image,
-                        #     handLandmarks,
-                        #     self.mp_hands.HAND_CONNECTIONS,
-                        #     self.mp_drawing_styles.get_default_hand_landmarks_style(),
-                        #     self.mp_drawing_styles.get_default_hand_connections_style())
+                        self.mp_drawing.draw_landmarks(
+                            image,
+                            handLandmarks,
+                            self.mp_hands.HAND_CONNECTIONS,
+                            self.mp_drawing_styles.get_default_hand_landmarks_style(),
+                            self.mp_drawing_styles.get_default_hand_connections_style())
 
-                    # cv2.imshow(str(self.cameraId), image)
-                    # if cv2.waitKey(5) & 0xFF == 27:
-                    #     break
+                    cv2.imshow(str(self.cameraId), image)
+                    if cv2.waitKey(5) & 0xFF == 27:
+                        break
 
                     self.resultQueue.put({"Right" : self.getRightHandJoints(), "Left": self.getLeftHandJoints()})
 

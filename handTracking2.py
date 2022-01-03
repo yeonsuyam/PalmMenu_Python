@@ -8,6 +8,7 @@ import numpy as np
 from multiprocessing import Process, Queue
 
 import time
+import keyboard
 
 class HandTracking():
     def __init__(self, upperCameraQueue, lowerCameraQueue, resultQueue):
@@ -16,8 +17,8 @@ class HandTracking():
         self.lowerCameraQueue = lowerCameraQueue
         self.resultQueue = resultQueue
 
-        self.upperCamera = HandTrackingCamera(None, 3, handNum = 1)
-        self.lowerCamera = HandTrackingCamera(None, 0, handNum = 2)
+        self.upperCamera = HandTrackingCamera(None, 0, handNum = 1)
+        # self.lowerCamera = HandTrackingCamera(None, 0, handNum = 2)
         pass
 
 
@@ -40,12 +41,21 @@ class HandTracking():
             try:
                 upperCameraHandTrackingResult = self.upperCameraQueue.get(0)
 
-                if upperCameraHandTrackingResult["Left"] is None and upperCameraHandTrackingResult["Right"] is not None:
-                    self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
-                    self.upperCamera.hands["Right"].updateHandByNPArray(None)
+                # print(upperCameraHandTrackingResult)
+
+                hand = [v for k, v in upperCameraHandTrackingResult.items() if v is not None][0]
+                if keyboard.is_pressed('l'):
+                    print("l")
+                    self.upperCamera.hands["Left"].updateHandByNPArray(hand)
                 else:
-                    self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
-                    self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
+                    self.upperCamera.hands["Right"].updateHandByNPArray(hand)
+
+                # if upperCameraHandTrackingResult["Left"] is None and upperCameraHandTrackingResult["Right"] is not None:
+                #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
+                #     self.upperCamera.hands["Right"].updateHandByNPArray(None)
+                # else:
+                #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
+                #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
             except:
                 pass
 
