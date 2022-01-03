@@ -31,14 +31,11 @@ class HandTrackingCamera():
 
         handTrackingHandler = mp.solutions.hands.Hands(
             max_num_hands=self.handNum,
-            model_complexity=2,
-            SMOOTH_LANDMARKS = True,
+            model_complexity=0,
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5)
 
         camera = cv2.VideoCapture(self.cameraId)
-
-        # startTime = time.time()
 
         while self.running:
             try:
@@ -54,11 +51,6 @@ class HandTrackingCamera():
 
                     results = handTrackingHandler.process(image)
                     
-
-                    # print("Time:", time.time() - startTime)
-                    # startTime = time.time()     
-
-
                     # image.flags.writeable = True
                     # image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 

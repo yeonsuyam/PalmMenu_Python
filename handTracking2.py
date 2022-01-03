@@ -8,7 +8,6 @@ import numpy as np
 from multiprocessing import Process, Queue
 
 import time
-import keyboard
 
 class HandTracking():
     def __init__(self, upperCameraQueue, lowerCameraQueue, resultQueue):
@@ -18,18 +17,17 @@ class HandTracking():
         self.resultQueue = resultQueue
 
         self.upperCamera = HandTrackingCamera(None, 3, handNum = 1)
-        # self.lowerCamera = HandTrackingCamera(None, 0, handNum = 2)
+        self.lowerCamera = HandTrackingCamera(None, 0, handNum = 2)
         pass
 
 
     def run(self):
         rightHand = None
         leftHand = None
-        # startTime = time.time()  
 
         while self.running:
             upperCameraHandTrackingResult = None
-            # lowerCameraHandTrackingResult = None
+            lowerCameraHandTrackingResult = None
 
             # try:
             #     lowerCameraHandTrackingResult = self.lowerCameraQueue.get(0)
@@ -41,28 +39,20 @@ class HandTracking():
 
             try:
                 upperCameraHandTrackingResult = self.upperCameraQueue.get(0)
-                hand = [v for k, v in upperCameraHandTrackingResult if v is not None][0]
 
-                if keyboard.is_pressed('space'):
-                    self.upperCamera.hands["Left"].updateHandByNPArray(hand)
+                if upperCameraHandTrackingResult["Left"] is None and upperCameraHandTrackingResult["Right"] is not None:
+                    self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
+                    self.upperCamera.hands["Right"].updateHandByNPArray(None)
                 else:
-                    self.upperCamera.hands["Right"].updateHandByNPArray(hand)
-
-                # if upperCameraHandTrackingResult["Left"] is None and upperCameraHandTrackingResult["Right"] is not None:
-                #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
-                #     self.upperCamera.hands["Right"].updateHandByNPArray(None)
-                # else:
-                #     self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
-                #     self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
+                    self.upperCamera.hands["Right"].updateHandByNPArray(upperCameraHandTrackingResult["Right"])
+                    self.upperCamera.hands["Left"].updateHandByNPArray(upperCameraHandTrackingResult["Left"])
             except:
                 pass
 
             if upperCameraHandTrackingResult == None and lowerCameraHandTrackingResult == None:
                 continue
 
-            # print("Time:", time.time() - startTime)
-            # startTime = time.time()            
-
+            # startTime = time.time()
 
             rightHand = self.upperCamera.getRightHandJoints()
             leftHand = self.upperCamera.getLeftHandJoints()

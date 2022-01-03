@@ -6,7 +6,7 @@ class TouchState(Enum):
     NotTouch = 0
 
 class Finger():
-    def __init__(self, threasholds={"up": 73, "down": 70}):
+    def __init__(self, threasholds={"up": 67, "down": 64}):
         self.threasholds = threasholds
         self.touchStates = TouchState.NotTouch
 
